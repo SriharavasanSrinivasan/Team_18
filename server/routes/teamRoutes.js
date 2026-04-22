@@ -16,7 +16,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit
     fileFilter: (req, file, cb) => {
         const filetypes = /jpeg|jpg|png|webp/;
         const mimetype = filetypes.test(file.mimetype);
@@ -31,7 +31,7 @@ const upload = multer({
 // POST route to add a team member
 router.post('/add', upload.single('photo'), async (req, res) => {
     try {
-        const { name, age, registerNumber, className, teamName } = req.body;
+        const { name, age, registerNumber, className, teamName, studentEmail, personalEmail, phoneNumber, fatherName } = req.body;
         
         // Basic validation
         if (!name || !age || !registerNumber || !className || !teamName) {
@@ -44,6 +44,10 @@ router.post('/add', upload.single('photo'), async (req, res) => {
             registerNumber,
             className,
             teamName,
+            studentEmail,
+            personalEmail,
+            phoneNumber,
+            fatherName,
             photo: req.file ? req.file.filename : null
         });
 

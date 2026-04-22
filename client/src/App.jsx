@@ -5,7 +5,10 @@ import LoginPage from './pages/LoginPage';
 import FacultyDashboard from './pages/FacultyDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import DriverDashboard from './pages/DriverDashboard';
-
+import TeamHub from './pages/TeamHub';
+import TeamMembers from './pages/TeamMembers';
+import AddMember from './pages/AddMember';
+import MemberDetails from './pages/MemberDetails';
 
 const ProtectedRoute = ({ children, role }) => {
   const { user, loading } = useAuth();
@@ -23,6 +26,7 @@ function AppRoutes() {
   const { user } = useAuth();
 
   const getLoginRedirect = () => {
+    if (!user) return '/login';
     if (user.role === 'admin') return '/admin';
     if (user.role === 'driver') return '/driver';
     return '/dashboard';
@@ -33,6 +37,13 @@ function AppRoutes() {
       <Route path="/login" element={
         user ? <Navigate to={getLoginRedirect()} replace /> : <LoginPage />
       } />
+      
+      {/* Team Management Routes */}
+      <Route path="/view-team" element={<TeamHub />} />
+      <Route path="/team-list" element={<TeamMembers />} />
+      <Route path="/add-member" element={<AddMember />} />
+      <Route path="/team-member/:id" element={<MemberDetails />} />
+
       <Route path="/dashboard" element={
         <ProtectedRoute role="faculty"><FacultyDashboard /></ProtectedRoute>
       } />

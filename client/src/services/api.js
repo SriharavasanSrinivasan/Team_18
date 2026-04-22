@@ -15,7 +15,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        // Only redirect to login if we're NOT already on the login page
+        // and the error is a 401 (Unauthorized)
+        if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
             localStorage.removeItem('bustrack_user');
             localStorage.removeItem('bustrack_token');
             window.location.href = '/login';

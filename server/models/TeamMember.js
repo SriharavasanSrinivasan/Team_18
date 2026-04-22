@@ -22,6 +22,22 @@ const teamMemberSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    studentEmail: {
+        type: String,
+        required: false
+    },
+    personalEmail: {
+        type: String,
+        required: false
+    },
+    phoneNumber: {
+        type: String,
+        required: false
+    },
+    fatherName: {
+        type: String,
+        required: false
+    },
     photo: {
         type: String, // Store the filename or path
         required: false
