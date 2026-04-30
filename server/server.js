@@ -22,26 +22,18 @@ connectDB().then(async () => {
 const app = express();
 const server = http.createServer(app);
 
-// Allowed origins: local dev + deployed Vercel frontend
-const allowedOrigins = [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    process.env.FRONTEND_URL,
-].filter(Boolean);
-
+// Configure allowed origins for CORS and Socket.io
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow requests with no origin (Render health checks, curl, mobile apps)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) return callback(null, true);
-        callback(new Error('Not allowed by CORS'));
+        // Accept all origins dynamically for easy Vercel deployment
+        callback(null, true);
     },
     credentials: true,
 };
 
 const io = new Server(server, {
     cors: {
-        origin: allowedOrigins,
+        origin: true, // Allow any origin in socket.io
         methods: ['GET', 'POST'],
         credentials: true,
     },
