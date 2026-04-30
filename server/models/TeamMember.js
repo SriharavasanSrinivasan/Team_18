@@ -5,41 +5,41 @@ const teamMemberSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    age: {
-        type: Number,
-        required: true
-    },
-    registerNumber: {
+    rollNumber: {
         type: String,
         required: true,
         unique: true
     },
-    className: {
+    year: {
         type: String,
         required: true
     },
-    teamName: {
+    degree: {
         type: String,
         required: true
     },
-    studentEmail: {
+    aboutProject: {
         type: String,
-        required: false
+        required: true
     },
-    personalEmail: {
-        type: String,
-        required: false
+    hobbies: {
+        type: String, // comma separated
+        required: true
     },
-    phoneNumber: {
+    certificate: {
         type: String,
-        required: false
+        required: true
     },
-    fatherName: {
+    internship: {
         type: String,
-        required: false
+        required: true
+    },
+    aboutYourAim: {
+        type: String,
+        required: true
     },
     photo: {
-        type: String, // Store the filename or path
+        type: String, // Store the filename or path for the uploaded file
         required: false
     }
 }, { timestamps: true });

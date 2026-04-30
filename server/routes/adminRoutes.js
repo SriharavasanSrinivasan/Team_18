@@ -31,6 +31,17 @@ router.get('/buses', protect, adminOnly, async (req, res) => {
     }
 });
 
+// @route GET /api/admin/buses/:busId/passengers — get all faculty assigned to a bus
+router.get('/buses/:busId/passengers', protect, adminOnly, async (req, res) => {
+    try {
+        const { busId } = req.params;
+        const passengers = await User.find({ assignedBus: busId, role: 'faculty' }).select('-password');
+        res.json(passengers);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // @route GET /api/admin/stats — summary stats
 router.get('/stats', protect, adminOnly, async (req, res) => {
     try {
@@ -59,6 +70,30 @@ router.get('/users/:role', protect, adminOnly, async (req, res) => {
     }
 });
 
+// @route PUT /api/admin/assign-bus/:id — update user (assign bus, etc.)
+router.put('/assign-bus/:id', protect, adminOnly, async (req, res) => {
+    console.log('PUT /assign-bus hit for ID:', req.params.id, 'Body:', req.body);
+    try {
+        const { name, email, role, assignedBus, boardingStop } = req.body;
+        
+        const updateData = { ...req.body };
+        delete updateData.password; // Safety check
+
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { $set: updateData },
+            { new: true }
+        ).select('-password');
+
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        res.json({ message: 'User updated successfully', user });
+    } catch (err) {
+        console.error('Update user error:', err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // @route DELETE /api/admin/users/:id — delete user
 router.delete('/users/:id', protect, adminOnly, async (req, res) => {
     try {
@@ -73,8 +108,8 @@ router.delete('/users/:id', protect, adminOnly, async (req, res) => {
 
 // ── BUS STOP ROUTES ──
 
-// @route GET /api/admin/stops — get all bus stops
-router.get('/stops', protect, adminOnly, async (req, res) => {
+// @route GET /api/admin/stops — get all bus stops (accessible to all authenticated users)
+router.get('/stops', protect, async (req, res) => {
     try {
         const stops = await BusStop.find().sort({ name: 1 });
         res.json(stops);
@@ -118,9 +153,21 @@ router.delete('/stops/:id', protect, adminOnly, async (req, res) => {
     try {
         const stop = await BusStop.findById(req.params.id);
         if (!stop) return res.status(404).json({ message: 'Stop not found' });
+        
+        const stopId = stop._id;
+        
+        // Delete the stop
         await BusStop.deleteOne({ _id: req.params.id });
-        res.json({ message: 'Bus stop deleted successfully' });
+        
+        // Clean up: Remove this stop from all bus routes
+        await Bus.updateMany(
+            {},
+            { $pull: { stops: { $or: [{ _id: stopId }, { name: stop.name }] } } }
+        );
+
+        res.json({ message: 'Bus stop deleted successfully and routes updated' });
     } catch (err) {
+        console.error("Stop delete backend error:", err);
         res.status(500).json({ message: err.message });
     }
 });

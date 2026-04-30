@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker, Polyline } from 'react-leaflet';
 import { useTheme } from '../context/ThemeContext';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -56,9 +56,9 @@ const MapUpdater = ({ center }) => {
     return null;
 };
 
-export default function MapView({ busLocations, stops = [], center, highlightBusId }) {
+export default function MapView({ busLocations, stops = [], routeStops = [], center, highlightBusId, boardingStopName }) {
     const { theme } = useTheme();
-    const defaultCenter = [12.8236, 80.0425]; // SRM Kattankulathur Main Gate
+    const defaultCenter = [12.8229, 80.0388]; // SRM Kattankulathur Dropping Point
 
     return (
         <div className="glass-card" style={{ height: '100%', minHeight: '400px', overflow: 'hidden', position: 'relative' }}>
@@ -79,28 +79,67 @@ export default function MapView({ busLocations, stops = [], center, highlightBus
                 <MapUpdater center={center} />
 
                 {/* Render Bus Stops */}
-                {stops.map((stop, idx) => (
-                    <CircleMarker
-                        key={`${stop.name}-${idx}`}
-                        center={[stop.lat, stop.lng]}
-                        radius={6}
-                        pathOptions={{
-                            fillColor: 'var(--accent-blue)',
-                            fillOpacity: 0.8,
-                            color: 'white',
-                            weight: 2
-                        }}
-                    >
-                        <Popup className="dark-popup">
-                            <div style={{ padding: '4px', fontSize: '13px', fontWeight: 'bold', color: '#111' }}>
-                                🚏 Stop: {stop.name}
-                            </div>
-                        </Popup>
-                    </CircleMarker>
-                ))}
+                {stops.map((stop, idx) => {
+                    const isDroppingPoint = stop.name === "SRM KTR Dropping Point";
+                    const isBoardingPoint = boardingStopName && stop.name === boardingStopName;
+                    
+                    if (isBoardingPoint) {
+                        const homeIcon = L.divIcon({
+                            className: 'custom-home-icon',
+                            html: `<div style="
+                                width: 32px; height: 32px;
+                                background: #8b5cf6;
+                                border: 2px solid white;
+                                border-radius: 8px;
+                                display: flex; align-items: center; justify-content: center;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                                font-size: 18px;
+                            ">🏠</div>`,
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16],
+                        });
+
+                        return (
+                            <Marker key={`boarding-${idx}`} position={[stop.lat, stop.lng]} icon={homeIcon}>
+                                <Popup className="dark-popup">
+                                    <div style={{ padding: '4px', fontSize: '13px', fontWeight: 'bold', color: '#111' }}>
+                                        🏠 Your Boarding Stop: {stop.name}
+                                    </div>
+                                </Popup>
+                            </Marker>
+                        );
+                    }
+
+                    return (
+                        <CircleMarker
+                            key={`${stop.name}-${idx}`}
+                            center={[stop.lat, stop.lng]}
+                            radius={isDroppingPoint ? 10 : 6}
+                            pathOptions={{
+                                fillColor: isDroppingPoint ? '#ff4757' : 'var(--accent-blue)',
+                                fillOpacity: 0.9,
+                                color: 'white',
+                                weight: isDroppingPoint ? 3 : 2
+                            }}
+                        >
+                            <Popup className="dark-popup">
+                                <div style={{ padding: '4px', fontSize: '13px', fontWeight: 'bold', color: '#111' }}>
+                                    {isDroppingPoint ? '🏁 Dropping Point: ' : '🚏 Stop: '} {stop.name}
+                                </div>
+                            </Popup>
+                        </CircleMarker>
+                    );
+                })}
+
+                {/* Render Route Polyline */}
+                {routeStops && routeStops.length > 1 && (
+                    <Polyline 
+                        positions={routeStops.map(s => [s.lat, s.lng])} 
+                        pathOptions={{ color: 'var(--accent-blue)', weight: 4, dashArray: '10, 10', opacity: 0.6 }} 
+                    />
+                )}
 
                 {/* Render Live Buses */}
-
                 {busLocations.map((loc) => {
                     if (!loc || !loc.latitude) return null;
                     const isHighlight = highlightBusId === loc.busId;

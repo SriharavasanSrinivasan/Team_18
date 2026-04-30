@@ -42,7 +42,7 @@ function AppRoutes() {
       <Route path="/view-team" element={<TeamHub />} />
       <Route path="/team-list" element={<TeamMembers />} />
       <Route path="/add-member" element={<AddMember />} />
-      <Route path="/team-member/:id" element={<MemberDetails />} />
+      <Route path="/member/:id" element={<MemberDetails />} />
 
       <Route path="/dashboard" element={
         <ProtectedRoute role="faculty"><FacultyDashboard /></ProtectedRoute>

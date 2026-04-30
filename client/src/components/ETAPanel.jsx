@@ -1,23 +1,13 @@
 import { useState, useEffect } from 'react';
 import { getETA } from '../services/api';
 
-// Typical stops for SRM Kattankulathur to select from
-const COLLEGE_STOPS = [
-    { id: 's1', name: 'SRM Main Gate', lat: 12.8236, lng: 80.0425 },
-    { id: 's2', name: 'University Building', lat: 12.8228, lng: 80.0435 },
-    { id: 's3', name: 'Tech Park', lat: 12.8215, lng: 80.0440 },
-    { id: 's4', name: 'SRM Hospital', lat: 12.8248, lng: 80.0460 },
-    { id: 's5', name: 'Potheri Railway Station', lat: 12.8250, lng: 80.0380 },
-];
-
-export default function ETAPanel({ activeBusId }) {
-    const [selectedStop, setSelectedStop] = useState(COLLEGE_STOPS[0]);
+export default function ETAPanel({ activeBusId, destination }) {
     const [etaData, setEtaData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!activeBusId || !selectedStop) {
+        if (!activeBusId || !destination) {
             setEtaData(null);
             return;
         }
@@ -26,7 +16,7 @@ export default function ETAPanel({ activeBusId }) {
             setLoading(true);
             setError(null);
             try {
-                const res = await getETA(activeBusId, selectedStop.lat, selectedStop.lng);
+                const res = await getETA(activeBusId, destination.lat, destination.lng);
                 setEtaData(res.data);
             } catch (err) {
                 setError('Location unavailable');
@@ -40,7 +30,7 @@ export default function ETAPanel({ activeBusId }) {
         // Refresh ETA every 10 seconds
         const interval = setInterval(fetchETA, 10000);
         return () => clearInterval(interval);
-    }, [activeBusId, selectedStop]);
+    }, [activeBusId, destination]);
 
     return (
         <div className="glass-card fade-in-up" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -48,20 +38,9 @@ export default function ETAPanel({ activeBusId }) {
                 ⏱️ Predict Arrival Time
             </h3>
 
-            <div className="form-group">
-                <label className="form-label">Select Your Pickup Stop</label>
-                <select
-                    className="form-input"
-                    value={selectedStop.id}
-                    onChange={(e) => {
-                        const stop = COLLEGE_STOPS.find(s => s.id === e.target.value);
-                        if (stop) setSelectedStop(stop);
-                    }}
-                >
-                    {COLLEGE_STOPS.map(stop => (
-                        <option key={stop.id} value={stop.id}>{stop.name}</option>
-                    ))}
-                </select>
+            <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--glass-border)' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Destination</span>
+                <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--accent-blue)' }}>📍 {destination?.name || 'Unknown'}</span>
             </div>
 
             {!activeBusId && (
@@ -104,7 +83,7 @@ export default function ETAPanel({ activeBusId }) {
                     </div>
 
                     <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                        Distance: <b>{etaData.distance} km</b> to {selectedStop.name}
+                        Distance: <b>{etaData.distance} km</b> to {destination?.name || 'Destination'}
                     </div>
                 </div>
             )}

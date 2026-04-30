@@ -11,8 +11,14 @@ export const AuthProvider = ({ children }) => {
         const storedUser = localStorage.getItem('bustrack_user');
         const storedToken = localStorage.getItem('bustrack_token');
         if (storedUser && storedToken) {
-            setUser(JSON.parse(storedUser));
-            setToken(storedToken);
+            try {
+                setUser(JSON.parse(storedUser));
+                setToken(storedToken);
+            } catch (err) {
+                console.error('Error parsing stored user:', err);
+                localStorage.removeItem('bustrack_user');
+                localStorage.removeItem('bustrack_token');
+            }
         }
         setLoading(false);
     }, []);

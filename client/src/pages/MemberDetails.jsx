@@ -10,10 +10,9 @@ export default function MemberDetails() {
     useEffect(() => {
         const fetchMember = async () => {
             try {
-                const res = await fetch(`/api/team/all`);
+                const res = await fetch(`/api/members/${id}`);
                 const data = await res.json();
-                const found = data.find(m => m._id === id);
-                setMember(found);
+                setMember(data);
             } catch (error) {
                 console.error('Failed to fetch member details:', error);
             } finally {
@@ -24,107 +23,120 @@ export default function MemberDetails() {
     }, [id]);
 
     if (loading) return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-primary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc' }}>
             <div className="spinner" />
         </div>
     );
 
     if (!member) return (
-        <div style={{ textAlign: 'center', marginTop: '100px', color: 'var(--text-secondary)' }}>
+        <div style={{ textAlign: 'center', marginTop: '100px', color: '#64748b' }}>
             <h2>Member not found</h2>
-            <button onClick={() => navigate('/team-list')} className="btn btn-secondary" style={{ marginTop: '20px' }}>Back to List</button>
+            <button onClick={() => navigate('/team-list')} style={{ marginTop: '20px', padding: '10px 20px', background: '#2563eb', color: 'white', borderRadius: '8px' }}>Back to List</button>
         </div>
     );
 
-    const joinedDate = member.createdAt ? new Date(member.createdAt).toLocaleDateString('en-US', {
-        day: 'numeric', month: 'long', year: 'numeric'
-    }) : 'N/A';
+    const hobbiesArray = member.hobbies ? member.hobbies.split(',').map(h => h.trim()).filter(h => h !== '') : [];
 
     return (
         <div style={{
-            minHeight: '100vh', padding: '60px 20px', background: 'var(--bg-primary)',
-            color: 'var(--text-primary)', display: 'flex', justifyContent: 'center'
+            minHeight: '100vh', padding: '60px 20px', background: '#f3f4f6',
+            fontFamily: 'var(--font-family)', color: '#1e293b', display: 'flex', justifyContent: 'center'
         }}>
-            <div className="glass-card fade-in-up" style={{
-                width: '100%', maxWidth: '800px', padding: '50px', position: 'relative'
-            }}>
+            <div style={{
+                width: '100%', maxWidth: '550px', 
+                background: '#ffffff', borderRadius: '16px', overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.06)', position: 'relative'
+            }} className="fade-in-up">
+                
+                {/* Back Button */}
                 <button 
                     onClick={() => navigate('/team-list')}
                     style={{
-                        position: 'absolute', top: '30px', left: '30px', background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid var(--glass-border)', color: 'var(--text-secondary)', 
-                        padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', zIndex: 10
+                        position: 'absolute', top: '15px', left: '15px', 
+                        background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(4px)',
+                        border: '1px solid #e2e8f0', color: '#64748b', 
+                        padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', zIndex: 10
                     }}
                 >
                     ← Back
                 </button>
 
-                <div style={{ textAlign: 'center', marginBottom: '40px', marginTop: '20px' }}>
-                    <div style={{
-                        width: '150px', height: '150px', borderRadius: '50%',
-                        overflow: 'hidden', margin: '0 auto 25px', border: '4px solid #3b82f6',
-                        background: '#3b82f622', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '50px', fontWeight: '800'
-                    }}>
-                        {member.photo ? (
-                            <img src={`/uploads/${member.photo}`} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                            member.name[0]
-                        )}
-                    </div>
-                    <h1 style={{ fontSize: '32px', fontWeight: '800' }}>{member.name}</h1>
-                    <div style={{
-                        display: 'inline-block', padding: '6px 16px', borderRadius: '99px',
-                        background: 'rgba(59,130,246,0.1)', color: '#3b82f6', fontSize: '14px',
-                        fontWeight: '700', marginTop: '12px'
-                    }}>
-                        {member.teamName}
-                    </div>
+                {/* Top Image Section */}
+                <div style={{ width: '100%', height: '300px', background: '#f1f5f9' }}>
+                    {member.photo ? (
+                        <img 
+                            src={`/uploads/${member.photo}`} 
+                            alt={member.name} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                    ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '80px', color: '#cbd5e1', fontWeight: '800' }}>
+                            {member.name[0].toUpperCase()}
+                        </div>
+                    )}
                 </div>
 
-                <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-                    gap: '20px' 
-                }}>
-                    <DetailItem label="Full Name" value={member.name} icon="👤" />
-                    <DetailItem label="Father's Name" value={member.fatherName} icon="👨‍👦" />
-                    <DetailItem label="Register Number" value={member.registerNumber} icon="🆔" />
-                    <DetailItem label="Age" value={member.age} icon="📅" />
-                    <DetailItem label="Class / Section" value={member.className} icon="🏫" />
-                    <DetailItem label="Phone Number" value={member.phoneNumber} icon="📞" />
-                    <DetailItem label="Student Email" value={member.studentEmail} icon="📧" />
-                    <DetailItem label="Personal Email" value={member.personalEmail} icon="✉️" />
-                    <DetailItem label="Joined Date" value={joinedDate} icon="🎉" />
-                </div>
-
-                <div style={{ marginTop: '40px', textAlign: 'center', paddingTop: '20px', borderTop: '1px solid var(--glass-border)' }}>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
-                        Internal ID: {member._id}
+                {/* Profile Header Below Image */}
+                <div style={{ padding: '30px 25px', textAlign: 'center', borderBottom: '1px solid #f1f5f9' }}>
+                    <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', textTransform: 'lowercase', marginBottom: '4px' }}>
+                        {member.name}
+                    </h1>
+                    <p style={{ fontSize: '14px', color: '#64748b', fontWeight: '500', textTransform: 'lowercase' }}>
+                        {member.degree} - {member.year}
                     </p>
                 </div>
+
+                {/* Details Section */}
+                <div style={{ padding: '20px 25px' }}>
+                    <DetailRow label="Roll Number" value={member.rollNumber} />
+                    <DetailRow label="Project" value={member.aboutProject} />
+                    <DetailRow label="Certificate" value={member.certificate} />
+                    <DetailRow label="Internship" value={member.internship} />
+                    <DetailRow label="About Your Aim" value={member.aboutYourAim} />
+
+                    {/* Hobbies Section */}
+                    <div style={{ marginTop: '25px' }}>
+                        <h4 style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', marginBottom: '12px' }}>Hobbies:</h4>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                            {hobbiesArray.map((hobby, index) => (
+                                <span key={index} style={{
+                                    padding: '5px 14px',
+                                    background: '#2563eb',
+                                    color: '#ffffff',
+                                    fontSize: '12px',
+                                    fontWeight: '600',
+                                    borderRadius: '50px',
+                                    textTransform: 'lowercase'
+                                }}>
+                                    {hobby}
+                                </span>
+                            ))}
+                            {hobbiesArray.length === 0 && <span style={{ color: '#94a3b8', fontSize: '13px' }}>No hobbies listed.</span>}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer Spacer */}
+                <div style={{ height: '30px' }} />
             </div>
         </div>
     );
 }
 
-function DetailItem({ label, value, icon }) {
-    const displayValue = value && value !== '' ? value : 'Not provided';
+function DetailRow({ label, value }) {
     return (
-        <div style={{
-            display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px',
-            background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid var(--glass-border)',
-            transition: 'transform 0.2s'
+        <div style={{ 
+            padding: '14px 0', 
+            borderBottom: '1px solid #f1f5f9',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px'
         }}>
-            <div style={{ fontSize: '24px', opacity: 0.8 }}>{icon}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: 'var(--text-secondary)', fontSize: '11px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
-                <div style={{ 
-                    fontWeight: '600', fontSize: '15px', marginTop: '2px', 
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    color: value ? 'var(--text-primary)' : 'var(--text-muted)'
-                }}>
-                    {displayValue}
-                </div>
+            <div style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
+                {label}:
+            </div>
+            <div style={{ fontSize: '14px', color: '#475569', lineHeight: '1.5' }}>
+                {value || 'N/A'}
             </div>
         </div>
     );

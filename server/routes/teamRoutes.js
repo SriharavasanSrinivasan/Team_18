@@ -18,36 +18,39 @@ const upload = multer({
     storage: storage,
     limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit
     fileFilter: (req, file, cb) => {
-        const filetypes = /jpeg|jpg|png|webp/;
+        const filetypes = /jpeg|jpg|png|webp|pdf/;
         const mimetype = filetypes.test(file.mimetype);
         const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
         if (mimetype && extname) {
             return cb(null, true);
         }
-        cb(new Error('Only images (jpeg, jpg, png, webp) are allowed'));
+        cb(new Error('Only images and PDFs are allowed'));
     }
 });
 
 // POST route to add a team member
-router.post('/add', upload.single('photo'), async (req, res) => {
+router.post('/', upload.single('photo'), async (req, res) => {
     try {
-        const { name, age, registerNumber, className, teamName, studentEmail, personalEmail, phoneNumber, fatherName } = req.body;
+        const { 
+            name, rollNumber, year, degree, aboutProject, 
+            hobbies, certificate, internship, aboutYourAim 
+        } = req.body;
         
         // Basic validation
-        if (!name || !age || !registerNumber || !className || !teamName) {
+        if (!name || !rollNumber || !year || !degree || !aboutProject || !hobbies || !certificate || !internship || !aboutYourAim) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
         const newMember = new TeamMember({
             name,
-            age,
-            registerNumber,
-            className,
-            teamName,
-            studentEmail,
-            personalEmail,
-            phoneNumber,
-            fatherName,
+            rollNumber,
+            year,
+            degree,
+            aboutProject,
+            hobbies,
+            certificate,
+            internship,
+            aboutYourAim,
             photo: req.file ? req.file.filename : null
         });
 
@@ -56,18 +59,37 @@ router.post('/add', upload.single('photo'), async (req, res) => {
     } catch (error) {
         console.error('Error adding team member:', error);
         if (error.code === 11000) {
-            return res.status(400).json({ message: 'Register number already exists' });
+            const field = Object.keys(error.keyPattern || {})[0] || 'Field';
+            console.error(`Duplicate key error: ${field} already exists`);
+            return res.status(400).json({ 
+                message: `${field === 'rollNumber' ? 'Roll Number' : field} already exists` 
+            });
         }
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
 
-// GET route to fetch all team members (optional, but useful)
-router.get('/all', async (req, res) => {
+// GET route to fetch all team members
+router.get('/', async (req, res) => {
     try {
         const members = await TeamMember.find().sort({ createdAt: -1 });
         res.json(members);
     } catch (error) {
+        console.error('Error fetching members:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// GET route to fetch a single team member by ID
+router.get('/:id', async (req, res) => {
+    try {
+        const member = await TeamMember.findById(req.params.id);
+        if (!member) {
+            return res.status(404).json({ message: 'Member not found' });
+        }
+        res.json(member);
+    } catch (error) {
+        console.error('Error fetching member details:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });

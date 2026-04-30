@@ -22,6 +22,7 @@ router.get('/my-bus', protect, async (req, res) => {
 router.get('/', protect, async (req, res) => {
     try {
         const buses = await Bus.find({ isActive: true });
+        console.log(`[DEBUG] GET /api/buses found ${buses.length} active buses`);
         res.json(buses);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -37,6 +38,15 @@ router.post('/', protect, adminOnly, async (req, res) => {
             return res.status(400).json({ message: 'Bus ID already exists' });
 
         const bus = await Bus.create({ busId, routeName, driverName, capacity, stops });
+
+        // Link bus to driver if name matches
+        if (driverName) {
+            await User.findOneAndUpdate(
+                { name: { $regex: new RegExp(`^${driverName.trim()}$`, 'i') }, role: 'driver' },
+                { assignedBus: busId }
+            );
+        }
+
         res.status(201).json(bus);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -63,6 +73,19 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
         );
 
         if (!bus) return res.status(404).json({ message: 'Bus not found' });
+        
+        // Link bus to driver if name matches
+        if (driverName) {
+            // 1. Clear previous driver for this bus (only affecting driver roles)
+            await User.updateMany({ assignedBus: busId || bus.busId, role: 'driver' }, { assignedBus: null });
+            
+            // 2. Set new driver
+            await User.findOneAndUpdate(
+                { name: { $regex: new RegExp(`^${driverName.trim()}$`, 'i') }, role: 'driver' },
+                { assignedBus: busId || bus.busId }
+            );
+        }
+
         res.json(bus);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -74,6 +97,10 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
     try {
         const bus = await Bus.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
         if (!bus) return res.status(404).json({ message: 'Bus not found' });
+
+        // Unlink driver (only affecting driver roles)
+        await User.updateMany({ assignedBus: bus.busId, role: 'driver' }, { assignedBus: null });
+
         res.json({ message: 'Bus deactivated', bus });
     } catch (err) {
         res.status(500).json({ message: err.message });

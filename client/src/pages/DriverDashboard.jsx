@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import { getMyBus } from '../services/api';
-import axios from 'axios';
+import api from '../services/api';
 
 export default function DriverDashboard() {
     const [bus, setBus] = useState(null);
@@ -12,6 +12,7 @@ export default function DriverDashboard() {
 
     // Status visualizers
     const [lastLoc, setLastLoc] = useState(null);
+    const [broadcastError, setBroadcastError] = useState('');
 
     const fetchBusDetails = async () => {
         try {
@@ -36,13 +37,15 @@ export default function DriverDashboard() {
             busId: bus.busId,
             latitude: coords.latitude,
             longitude: coords.longitude,
-            speed: coords.speed ? Math.round(coords.speed * 3.6) : 0, // Convert m/s to km/h, default 0 if null/0
+            speed: coords.speed ? Math.round(coords.speed * 3.6) : 0, // Convert m/s to km/h
             heading: coords.heading || 0,
-            routeIndex: 0 // Optional for live driver
+            routeIndex: 0
         };
 
         try {
-            await axios.post('http://localhost:5001/api/location/update', payload);
+            // Use shared api instance (correct URL + auth token auto-attached)
+            await api.post('/location/update', payload);
+            setBroadcastError('');
             setLastLoc({
                 time: new Date().toLocaleTimeString(),
                 lat: coords.latitude.toFixed(5),
@@ -50,6 +53,7 @@ export default function DriverDashboard() {
             });
         } catch (err) {
             console.error("Failed to broadcast location", err);
+            setBroadcastError(`Send failed: ${err.response?.data?.message || err.message}`);
         }
     };
 
@@ -126,11 +130,14 @@ export default function DriverDashboard() {
 
                         {isBroadcasting && (
                             <div style={{ marginTop: '32px', padding: '16px', borderTop: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-green)', fontWeight: '600' }}>
-                                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--accent-green)', animation: 'pulse 2s infinite' }} />
-                                    Live Connection Active
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: broadcastError ? 'var(--accent-red)' : 'var(--accent-green)', fontWeight: '600' }}>
+                                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: broadcastError ? 'var(--accent-red)' : 'var(--accent-green)', animation: broadcastError ? 'none' : 'pulse 2s infinite' }} />
+                                    {broadcastError ? 'Connection Error' : 'Live Connection Active'}
                                 </div>
-                                {lastLoc && (
+                                {broadcastError && (
+                                    <div style={{ fontSize: '12px', color: 'var(--accent-red)', textAlign: 'center' }}>{broadcastError}</div>
+                                )}
+                                {lastLoc && !broadcastError && (
                                     <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                                         Last sync: {lastLoc.time} • [{lastLoc.lat}, {lastLoc.lng}]
                                     </div>

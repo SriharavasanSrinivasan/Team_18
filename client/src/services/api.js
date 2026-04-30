@@ -11,12 +11,10 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Global 401 handler — if the server says "Not Authorized", boot to login
+// Global 401 handler
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Only redirect to login if we're NOT already on the login page
-        // and the error is a 401 (Unauthorized)
         if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
             localStorage.removeItem('bustrack_user');
             localStorage.removeItem('bustrack_token');
@@ -30,6 +28,7 @@ api.interceptors.response.use(
 export const registerUser = (data) => api.post('/auth/register', data);
 export const loginUser = (data) => api.post('/auth/login', data);
 export const resetPassword = (data) => api.post('/auth/reset-password', data);
+export const getProfile = () => api.get('/auth/profile');
 
 // Buses
 export const getBuses = () => api.get('/buses');
@@ -48,7 +47,9 @@ export const getAdminBuses = () => api.get('/admin/buses');
 export const getDelays = () => api.get('/admin/delays');
 export const getAdminStats = () => api.get('/admin/stats');
 export const getUsersByRole = (role) => api.get(`/admin/users/${role}`);
+export const getBusPassengers = (busId) => api.get(`/admin/buses/${busId}/passengers`);
 export const deleteUser = (id) => api.delete(`/admin/users/${id}`);
+export const updateAdminUser = (id, data) => api.put(`/admin/assign-bus/${id}`, data);
 
 // Bus Stops
 export const getBusStops = () => api.get('/admin/stops');
@@ -57,7 +58,7 @@ export const updateBusStop = (id, data) => api.put(`/admin/stops/${id}`, data);
 export const deleteBusStop = (id) => api.delete(`/admin/stops/${id}`);
 
 // Team
-export const addTeamMember = (formData) => api.post('/team/add', formData, {
+export const addTeamMember = (formData) => api.post('/members', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
 });
 

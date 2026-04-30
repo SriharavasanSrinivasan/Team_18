@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { loginUser, registerUser, resetPassword } from '../services/api';
+import { loginUser } from '../services/api';
 
 export default function LoginPage() {
-    const [isLogin, setIsLogin] = useState(true);
     const [isForgotPassword, setIsForgotPassword] = useState(false);
-    const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'faculty' });
+    const [formData, setFormData] = useState({ email: '', password: '' });
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
@@ -16,19 +15,15 @@ export default function LoginPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        if (!isLogin && !isForgotPassword && !formData.email.endsWith('@srmist.edu.in')) {
-            setError('Only @srmist.edu.in email addresses are permitted.'); return;
-        }
         setLoading(true);
         try {
             if (isForgotPassword) {
-                await resetPassword({ email: formData.email, newPassword: formData.password });
-                setSuccessMessage('Password updated! You can now log in.');
-                setIsForgotPassword(false); setIsLogin(true); return;
+                // For demonstration, reset password logic remains simple
+                // In a real app, this would send an email
+                setError('Password reset link has been sent to your email (Demo)');
+                return;
             }
-            const res = isLogin
-                ? await loginUser({ email: formData.email, password: formData.password })
-                : await registerUser(formData);
+            const res = await loginUser({ email: formData.email, password: formData.password });
             const { token, ...userData } = res.data;
             login(userData, token);
             if (userData.role === 'admin') navigate('/admin'); else navigate('/dashboard');
@@ -50,7 +45,7 @@ export default function LoginPage() {
                 <div style={{ textAlign: 'center', marginBottom: '28px' }}>
                     <div style={{ fontSize: '48px', marginBottom: '12px' }}>🚌</div>
                     <h1 style={{ fontSize: '24px', fontWeight: '700', marginBottom: '6px' }}>
-                        {isForgotPassword ? 'Reset Password' : (isLogin ? 'Welcome Back' : 'Create Account')}
+                        {isForgotPassword ? 'Reset Password' : 'Welcome Back'}
                     </h1>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
                         College Bus Tracking System
@@ -69,25 +64,9 @@ export default function LoginPage() {
                 )}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {!isLogin && !isForgotPassword && (
-                        <>
-                            <div className="form-group">
-                                <label className="form-label">Full Name</label>
-                                <input required className="form-input" type="text" placeholder="John Doe" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Role</label>
-                                <select className="form-input" value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
-                                    <option value="faculty">Faculty</option>
-                                    <option value="admin">Administrator</option>
-                                    <option value="driver">Bus Driver</option>
-                                </select>
-                            </div>
-                        </>
-                    )}
                     <div className="form-group">
                         <label className="form-label">Email Address</label>
-                        <input required className="form-input" type="email" placeholder="you@srmist.edu.in" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                        <input required className="form-input" type="email" placeholder="you@example.com" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                     </div>
                     <div className="form-group">
                         <label className="form-label">{isForgotPassword ? 'New Password' : 'Password'}</label>
@@ -97,10 +76,10 @@ export default function LoginPage() {
                     <button type="submit" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px', marginTop: '4px' }} disabled={loading}>
                         {loading
                             ? <div className="spinner" style={{ width: '18px', height: '18px', borderWidth: '2px' }} />
-                            : (isForgotPassword ? 'Reset Password' : (isLogin ? 'Sign In' : 'Sign Up'))}
+                            : (isForgotPassword ? 'Reset Password' : 'Sign In')}
                     </button>
 
-                    {isLogin && !isForgotPassword && (
+                    {!isForgotPassword && (
                         <div style={{ textAlign: 'right', marginTop: '-6px' }}>
                             <span style={{ color: 'var(--accent-blue)', cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}
                                 onClick={() => { setIsForgotPassword(true); setError(''); }}>
@@ -111,19 +90,11 @@ export default function LoginPage() {
                 </form>
 
                 <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                    {isForgotPassword ? (
+                    {isForgotPassword && (
                         <span style={{ color: 'var(--accent-blue)', cursor: 'pointer', fontWeight: '500' }}
-                            onClick={() => { setIsForgotPassword(false); setIsLogin(true); setError(''); }}>
+                            onClick={() => { setIsForgotPassword(false); setError(''); }}>
                             ← Back to login
                         </span>
-                    ) : (
-                        <>
-                            {isLogin ? "Don't have an account? " : "Already have an account? "}
-                            <span style={{ color: 'var(--accent-blue)', cursor: 'pointer', fontWeight: '500' }}
-                                onClick={() => { setIsLogin(!isLogin); setError(''); setSuccessMessage(''); }}>
-                                {isLogin ? 'Register now' : 'Login here'}
-                            </span>
-                        </>
                     )}
                 </div>
 
@@ -139,7 +110,7 @@ export default function LoginPage() {
                             fontSize: '14px', fontWeight: '600'
                         }}
                     >
-                        👥 Manage Team members
+                        👥 My Team
                     </button>
                 </div>
             </div>
